@@ -1,5 +1,6 @@
 package com.example.demo_spring_boot.controllers
 
+import com.example.demo_spring_boot.controllers.NoteController.NoteResponse
 import com.example.demo_spring_boot.database.model.Note
 import com.example.demo_spring_boot.database.repository.NoteRepository
 import org.bson.types.ObjectId
@@ -56,13 +57,18 @@ class NoteController(
         }
     }
 
-    private fun Note.toResponse(): NoteResponse {
-        return NoteResponse(
-            id = id.toHexString(),
-            title = title,
-            color = color,
-            content = content,
-            createdAt = createdAt
-        )
+    @DeleteMapping(path = ["/{id}"])
+    fun deleteById(@PathVariable id: String){
+        repository.deleteById(ObjectId(id))
     }
+}
+
+private fun Note.toResponse(): NoteResponse {
+    return NoteResponse(
+        id = id.toHexString(),
+        title = title,
+        color = color,
+        content = content,
+        createdAt = createdAt
+    )
 }
