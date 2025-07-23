@@ -4,6 +4,7 @@ import com.example.demo_spring_boot.controllers.NoteController.NoteResponse
 import com.example.demo_spring_boot.database.model.Note
 import com.example.demo_spring_boot.database.repository.NoteRepository
 import org.bson.types.ObjectId
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import java.time.Instant
 
@@ -34,6 +35,7 @@ class NoteController(
 
     @PostMapping
     fun save(@RequestBody body: NoteRequest): NoteResponse {
+        val ownerId = SecurityContextHolder.getContext().authentication.principal as String
         val note = repository.save(
             Note(
                 id = body.id?.let { ObjectId(it) } ?: ObjectId.get(),
@@ -41,7 +43,7 @@ class NoteController(
                 content = body.content,
                 color = body.color,
                 createdAt = Instant.now(),
-                ownerId = ObjectId()
+                ownerId = ObjectId(ownerId)
             )
         )
 
@@ -49,9 +51,8 @@ class NoteController(
     }
 
     @GetMapping
-    fun findByOwnerId(
-        @RequestParam(required = true) ownerId: String
-    ): List<NoteResponse> {
+    fun findByOwnerId(): List<NoteResponse> {
+        val ownerId = SecurityContextHolder.getContext().authentication.principal as String
         return repository.findByOwnerId(ObjectId(ownerId)).map {
             it.toResponse()
         }
@@ -59,7 +60,13 @@ class NoteController(
 
     @DeleteMapping(path = ["/{id}"])
     fun deleteById(@PathVariable id: String){
-        repository.deleteById(ObjectId(id))
+        val note = repository.findById(ObjectId(id)).orElseThrow(){
+            IllegalArgumentException("Note not found")
+        }
+        val ownerId = SecurityContextHolder.getContext().authentication.principal as String
+        if (note.ownerId.toHexString()==ownerId) {
+            repository.deleteById(ObjectId(id))
+        }
     }
 }
 
