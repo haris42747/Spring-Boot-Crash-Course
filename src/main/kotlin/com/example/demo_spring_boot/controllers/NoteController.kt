@@ -3,6 +3,8 @@ package com.example.demo_spring_boot.controllers
 import com.example.demo_spring_boot.controllers.NoteController.NoteResponse
 import com.example.demo_spring_boot.database.model.Note
 import com.example.demo_spring_boot.database.repository.NoteRepository
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import org.bson.types.ObjectId
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -20,6 +22,7 @@ class NoteController(
 
     data class NoteRequest(
         val id: String?,
+        @field:NotBlank(message = "Title can't be blank.")
         val title: String,
         val content: String,
         val color: Long,
@@ -34,7 +37,9 @@ class NoteController(
     )
 
     @PostMapping
-    fun save(@RequestBody body: NoteRequest): NoteResponse {
+    fun save(
+       @Valid @RequestBody body: NoteRequest
+    ): NoteResponse {
         val ownerId = SecurityContextHolder.getContext().authentication.principal as String
         val note = repository.save(
             Note(
